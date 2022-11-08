@@ -29,7 +29,7 @@ CShader* myBasicShader;
 float amount = 0;
 float temp = 0.002f;
 	
-CThreeDModel spaceEnvironment, boxRight, boxFront;
+CThreeDModel spaceEnvironment, boxRight, boxFront, automatedSpaceShip;
 CThreeDModel spaceShip; //A threeDModel object is needed for each model loaded
 COBJLoader objLoader;	//this object is used to load the 3d models.
 ///END MODEL LOADING
@@ -41,6 +41,7 @@ glm::mat4 viewingMatrix; //matrix for the viewing
 glm::mat4 objectRotation;
 glm::vec3 translation = glm::vec3(0.0, 0.0, 0.0);
 glm::vec3 pos = glm::vec3(0.0f,0.0f,0.0f); //vector for the position of the object.
+glm::vec3 automated_pos = glm::vec3(5.0, 20.0, 0.0); //vector for the position of the other object.
 glm::vec3 initalDirectionVector = glm::vec3(0.0f,1.0f, 0.0f);
 glm::vec3 directionVector = glm::vec3(0.0f, 0.0f, 0.0f);
 glm::vec3 cameraPos = glm::vec3(0.0f, 10.0f, 50.0f);
@@ -66,7 +67,8 @@ float LightPos[4] = { 0.0f, 0.0f, 1.0f, 0.0f };
 //Second light properties at the entrance of the planet.
 float PlanetLight_Ambient_And_Diffuse[4] = {1.0f, 1.0f, 1.0f, 1.0f};
 float planetLight_specular[4];
-float planetLightPos[4] = { 0.0f, 0.0,1.0f,0.0f};
+float planetLightPos[4] = { 0.0f,1.0f,1.0f,0.0f};
+
 
 
 //
@@ -85,6 +87,7 @@ bool camera = false;
 
 float spin=180;
 float speed=0;
+float speed_automated = 0.0f;
 
 //OPENGL FUNCTION PROTOTYPES
 void display();				//called in winmain to draw everything to the screen
@@ -93,6 +96,8 @@ void init();				//called in winmain when the program starts.
 void processKeys();         //called in winmain to process keyboard input
 void idle();		//idle function
 void updateTransform(float xinc, float yinc, float zinc);
+glm::mat4 automateDirection();
+
 
 /*************    START OF OPENGL FUNCTIONS   ****************/
 void display()									
@@ -171,6 +176,7 @@ void display()
 	glm::mat3 normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
 	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 	spaceEnvironment.DrawElementsUsingVBO(myShader);
+	
 
 	//Coding for the spaceship
 
@@ -197,6 +203,19 @@ void display()
 	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 	
 	spaceShip.DrawElementsUsingVBO(myShader);
+
+	modelmatrix = glm::translate(glm::mat4(1.0f), automated_pos);
+	//objectRotation = automateDirection();
+	ModelViewMatrix = viewingMatrix * modelmatrix ;
+	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
+
+
+	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
+	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
+	automatedSpaceShip.DrawElementsUsingVBO(myShader);
+
+
+
 
 
 
@@ -280,6 +299,7 @@ void init()
 
 		//copy data from the OBJLoader object to the threedmodel class
 		spaceShip.ConstructModelFromOBJLoader(objLoader);
+		automatedSpaceShip.ConstructModelFromOBJLoader(objLoader);
 
 		//if you want to translate the object to the origin of the screen,
 		//first calculate the centre of the object, then move all the vertices
@@ -290,6 +310,7 @@ void init()
 
 	
 		spaceShip.InitVBO(myShader);
+		automatedSpaceShip.InitVBO(myShader);
 	}
 	else
 	{
@@ -312,6 +333,7 @@ void init()
 	if (objLoader.LoadModel("TestModels/spaceEnvironmentTest2.obj"))//returns true if the model is loaded
 	{
 		spaceEnvironment.ConstructModelFromOBJLoader(objLoader);
+		
 
 
 		
@@ -326,6 +348,7 @@ void init()
 		
 
 		spaceEnvironment.InitVBO(myShader);
+		
 	}
 	else
 	{
@@ -371,6 +394,20 @@ void init()
 	*/
 	
 }
+glm::mat4 automateDirection() {
+	float xinc = (float)rand() / RAND_MAX;
+	float yinc = (float)rand() / RAND_MAX;
+
+
+	speed_automated = rand() / RAND_MAX;
+
+	objectRotation = glm::rotate(objectRotation, xinc, glm::vec3(1, 0, 0));
+	objectRotation = glm::rotate(objectRotation, yinc, glm::vec3(0, 1, 0));
+	return objectRotation * speed_automated;
+}
+
+
+
 
 void special(int key, int x, int y)
 {
@@ -512,7 +549,7 @@ void updateTransform(float xinc, float yinc, float zinc)
 	objectRotation = glm::rotate(objectRotation, xinc, glm::vec3(1,0,0));
 	objectRotation = glm::rotate(objectRotation, yinc, glm::vec3(0,1,0));
 	objectRotation = glm::rotate(objectRotation, zinc, glm::vec3(0,0,1));
-	directionVector = initalDirectionVector * objectRotation[2][1];
+
 }
 
 void idle()
