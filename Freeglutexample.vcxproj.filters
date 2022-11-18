@@ -31,6 +31,15 @@
     <ClCompile Include="shaders\Shader.cpp">
       <Filter>headers\shaders</Filter>
     </ClCompile>
+    <ClCompile Include="spaceItem\spaceship.cpp">
+      <Filter>headers\spaceItems</Filter>
+    </ClCompile>
+    <ClCompile Include="spaceItem\planets.cpp">
+      <Filter>headers\spaceItems</Filter>
+    </ClCompile>
+    <ClCompile Include="spaceItem\Sphere.cpp">
+      <Filter>headers\spaceItems</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="3dStruct\threeDModel.h">
@@ -62,6 +71,15 @@
     </ClInclude>
     <ClInclude Include="shaders\Shader.h">
       <Filter>headers\shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="spaceItem\spaceShip.h">
+      <Filter>headers\spaceItems</Filter>
+    </ClInclude>
+    <ClInclude Include="spaceItem\planets.h">
+      <Filter>headers\spaceItems</Filter>
+    </ClInclude>
+    <ClInclude Include="spaceItem\Sphere.h">
+      <Filter>headers\spaceItems</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -100,6 +118,9 @@
     </Filter>
     <Filter Include="headers\shaders">
       <UniqueIdentifier>{c715a860-d723-4985-8289-8bd7cadcb8e0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="headers\spaceItems">
+      <UniqueIdentifier>{102896f4-95f1-4d7c-aec5-6cade37a3ded}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

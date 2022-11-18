@@ -26,6 +26,9 @@
     <ClInclude Include="Obj\OBJLoader.h" />
     <ClInclude Include="Octree\Octree.h" />
     <ClInclude Include="shaders\Shader.h" />
+    <ClInclude Include="spaceItem\planets.h" />
+    <ClInclude Include="spaceItem\spaceShip.h" />
+    <ClInclude Include="spaceItem\Sphere.h" />
     <ClInclude Include="Structures\Vector3d.h" />
     <ClInclude Include="TextureHandler\TextureHandler.h" />
     <ClInclude Include="Utilities\IntersectionTests.h" />
@@ -38,6 +41,9 @@
     <ClCompile Include="Obj\OBJLoader.cpp" />
     <ClCompile Include="Octree\Octree.cpp" />
     <ClCompile Include="shaders\Shader.cpp" />
+    <ClCompile Include="spaceItem\planets.cpp" />
+    <ClCompile Include="spaceItem\spaceship.cpp" />
+    <ClCompile Include="spaceItem\Sphere.cpp" />
     <ClCompile Include="Structures\Vector3d.cpp" />
     <ClCompile Include="TextureHandler\TextureHandler.cpp" />
     <ClCompile Include="Utilities\IntersectionTests.cpp" />
@@ -79,7 +85,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>

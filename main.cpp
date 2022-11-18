@@ -12,6 +12,8 @@ using namespace std;
 #include "glm\gtc\matrix_transform.hpp"
 #include "glm\gtc\type_ptr.hpp"
 #include "glm\gtc\matrix_inverse.hpp"
+#include "spaceItem/spaceShip.h"
+#include "spaceItem/planets.h"
 
 #include "GL\freeglut.h"
 
@@ -21,16 +23,21 @@ using namespace std;
 
 CShader* myShader;  ///shader object 
 CShader* myBasicShader;
+SpaceShip spaceShips;
+Planets saturn;
+
 
 //MODEL LOADING
 #include "3DStruct\threeDModel.h"
 #include "Obj\OBJLoader.h"
+//Classes loading
+
 
 float amount = 0;
 float temp = 0.002f;
 	
 CThreeDModel spaceEnvironment, boxRight, boxFront, automatedSpaceShip;
-CThreeDModel spaceShip; //A threeDModel object is needed for each model loaded
+
 COBJLoader objLoader;	//this object is used to load the 3d models.
 ///END MODEL LOADING
 
@@ -52,7 +59,7 @@ glm::vec3 distanceOfCamera = glm::vec3(0.0f, 0.0f, 0.0F);
 
 //rotation angle
 float angleInDegrees=0.0f;
-float moveSpaceShip = 0.01f;
+
 
 //Material properties
 float Material_Ambient[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
@@ -86,7 +93,7 @@ bool End = false;
 bool camera = false;
 
 float spin=180;
-float speed=0;
+float speed;
 float speed_automated = 0.0f;
 
 //OPENGL FUNCTION PROTOTYPES
@@ -96,6 +103,7 @@ void init();				//called in winmain when the program starts.
 void processKeys();         //called in winmain to process keyboard input
 void idle();		//idle function
 void updateTransform(float xinc, float yinc, float zinc);
+glm::mat4 changeCameraView(bool camera);
 glm::mat4 automateDirection();
 
 
@@ -115,113 +123,28 @@ void display()
 
 	//Set the projection matrix in the shader
 	GLuint projMatLocation = glGetUniformLocation(myShader->GetProgramObjID(), "ProjectionMatrix");  
+	
 	glUniformMatrix4fv(projMatLocation, 1, GL_FALSE, &ProjectionMatrix[0][0]);
 
 	viewingMatrix = glm::mat4(1.0f);
-	
-	
-	//translation and rotation for view
-	//viewingMatrix = glm::translate(glm::mat4(1.0), glm::vec3(0, 0, -50));
 
-	//apply a rotation to the view
-	//static float angle = 0.0f;
-	//angle += 0.01;
-	//viewingMatrix = glm::rotate(viewingMatrix, angle, glm::vec3(1.0f, 0.0f, 0.0));
 
 	//use of glm::lookAt for viewing instead.
-	
-	if(distanceOfCamera.z <=15){
-		cout << "out of camera view";
-		cout << pos.z << endl;
-	}
-	
-	cameraFinalLook = cameraLookAt + pos;
-	if (camera){
-		cameraPos = pos + glm::vec3(objectRotation[1])* 2.5f;
-		viewingMatrix = glm::lookAt(cameraPos, pos + glm::vec3(objectRotation[1])*10.0f, glm::vec3(objectRotation[0]));
-
-	}
-	else {
-		cameraPos = glm::vec3(0.0f, 10.0f, 50.0f);
-		viewingMatrix = glm::lookAt(cameraPos, pos, glm::vec3(0.0f, 1.0f, 0.0));
-	}
-	
-
+	viewingMatrix = changeCameraView(camera);
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ViewMatrix"), 1, GL_FALSE, &viewingMatrix[0][0]);
 
+	spaceShips.SpaceShipDisplay(myShader, viewingMatrix);
 
+	
 	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "light_ambient"), 1, Light_Ambient_And_Diffuse);
 	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "material_ambient"), 1, Material_Ambient);
 	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "material_diffuse"), 1, Material_Diffuse);
 	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "material_specular"), 1, Material_Specular);
 	glUniform1f(glGetUniformLocation(myShader->GetProgramObjID(), "material_shininess"), Material_Shininess);
-
+	
 	
 
-	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "planetLightPos"), 1, planetLightPos);
-	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "planetLight_specular"), 1, Light_Specular);
-
-	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "planetLight_diffuse;"), 1,PlanetLight_Ambient_And_Diffuse);
-
-	
-
-	glm::mat4 modelmatrixEnvironment = glm::translate(glm::mat4(1.0f), glm::vec3(0.0, -25, 0.0));
-	angleInDegrees = 90.0f;
-	modelmatrixEnvironment = glm::rotate(modelmatrixEnvironment, glm::radians(angleInDegrees), glm::vec3(0.0, 1.0, 0.0));
-
-	modelmatrixEnvironment = glm::scale(modelmatrixEnvironment, glm::vec3(0.5, 0.5, 0.5));
-	ModelViewMatrix = viewingMatrix * modelmatrixEnvironment;
-	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
-
-	glm::mat3 normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
-	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
-	spaceEnvironment.DrawElementsUsingVBO(myShader);
-	
-
-	//Coding for the spaceship
-
-
-	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "LightPos"), 1, LightPos);
-	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "light_diffuse"), 1, Light_Ambient_And_Diffuse);
-	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "light_specular"), 1, Light_Specular);
-	
-
-
-	
-	pos.x += objectRotation[1][0]*speed;
-	pos.y += objectRotation[1][1]*speed;
-	pos.z += objectRotation[1][2]*speed;
-	
-
-	
-	glm::mat4 modelmatrix = glm::translate(glm::mat4(1.0f), pos);
-	ModelViewMatrix = viewingMatrix * modelmatrix * objectRotation;
-	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
-
-	
-	 normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
-	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
-	
-	spaceShip.DrawElementsUsingVBO(myShader);
-
-	modelmatrix = glm::translate(glm::mat4(1.0f), automated_pos);
-	//objectRotation = automateDirection();
-	ModelViewMatrix = viewingMatrix * modelmatrix ;
-	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
-
-
-	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
-	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
-	automatedSpaceShip.DrawElementsUsingVBO(myShader);
-
-
-
-
-
-
- 
-	
-
+	saturn.PlanetsDisplay(myShader, viewingMatrix);
 	//Switch to basic shader to draw the lines for the bounding boxes
 	glUseProgram(myBasicShader->GetProgramObjID());
 	projMatLocation = glGetUniformLocation(myBasicShader->GetProgramObjID(), "ProjectionMatrix");
@@ -237,7 +160,7 @@ void display()
 
 	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(0, 0, 0));
 
-	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
+	glm::mat4 normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
 	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
@@ -260,10 +183,12 @@ void reshape(int width, int height)		// Resize the OpenGL window
 
 	//Set the projection matrix
 	ProjectionMatrix = glm::perspective(glm::radians(60.0f), (GLfloat)screenWidth/(GLfloat)screenHeight, 1.0f, 200.0f);
+	
+
 }
 void init()
 {
-	glClearColor(1.0,1.0,1.0,0.0);						//sets the clear colour to yellow
+	glClearColor(0.0,0.0,0.75,0.0);						//sets the clear colour to yellow
 														//glClear(GL_COLOR_BUFFER_BIT) in the display function
 														//will clear the buffer to this colour
 	glEnable(GL_DEPTH_TEST);
@@ -289,36 +214,9 @@ void init()
 
 	//lets initialise our object's rotation transformation 
 	//to the identity matrix
-	pos.y = 14;
 	objectRotation = glm::mat4(1.0f);
 
-	cout << " loading model " << endl;
-	if(objLoader.LoadModel("TestModels/spaceShip.obj"))//returns true if the model is loaded
-	{
-		cout << " SpaceShip model loaded " << endl;		
-
-		//copy data from the OBJLoader object to the threedmodel class
-		spaceShip.ConstructModelFromOBJLoader(objLoader);
-		automatedSpaceShip.ConstructModelFromOBJLoader(objLoader);
-
-		//if you want to translate the object to the origin of the screen,
-		//first calculate the centre of the object, then move all the vertices
-		//back so that the centre is on the origin.
-		
-		spaceShip.CalcCentrePoint();
-		spaceShip.CentreOnZero();
-
-	
-		spaceShip.InitVBO(myShader);
-		automatedSpaceShip.InitVBO(myShader);
-	}
-	else
-	{
-		cout << " model failed to load " << endl;
-	}
-
-
-
+	spaceShips.InitialiseSpaceShips(myShader, myBasicShader);
 	
 	if (!myShader->CreateShaderProgram("PlanetView", "glslfiles/secondLight.vert", "glslfiles/secondLight.frag"))
 	{
@@ -327,71 +225,10 @@ void init()
 
 	glUseProgram(myShader->GetProgramObjID());
 	
-	
+	saturn.InitialisePlanet(myShader);
 
-
-	if (objLoader.LoadModel("TestModels/spaceEnvironmentTest2.obj"))//returns true if the model is loaded
-	{
-		spaceEnvironment.ConstructModelFromOBJLoader(objLoader);
-		
-
-
-		
-		spaceEnvironment.CalcCentrePoint();
-		spaceEnvironment.CentreOnZero();
-		
-		
-
-
-		//Place to centre geometry before creating VBOs.
-
-		
-
-		spaceEnvironment.InitVBO(myShader);
-		
-	}
-	else
-	{
-		cout << " spaceSurface failed to load " << endl;
-	}
-
-	/*
-	* 
-	* if (objLoader.LoadModel("TestModels/spaceSurface.obj"))//returns true if the model is loaded
-	{
-		spaceEnvironment.ConstructModelFromOBJLoader(objLoader);
-
-		//Place to centre geometry before creating VBOs.
-
-		spaceEnvironment.InitVBO(myShader);
-	}
-	else
-	{
-		cout << " spaceSurface failed to load " << endl;
-	}
-	
-	*/
 
 	
-
-	/*
-	
-	
-	if (objLoader.LoadModel("TestModels/boxLeft.obj"))//returns true if the model is loaded
-	{
-		boxLeft.ConstructModelFromOBJLoader(objLoader);
-
-		//Place to centre geometry before creating VBOs.
-
-		boxLeft.InitVBO(myShader);
-	}
-	if (objLoader.LoadModel("TestModels/boxRight.obj"))//returns true if the model is loaded
-	{
-		boxRight.ConstructModelFromOBJLoader(objLoader);
-		boxRight.InitVBO(myShader);
-	}
-	
-	*/
 	
 }
 glm::mat4 automateDirection() {
@@ -404,6 +241,22 @@ glm::mat4 automateDirection() {
 	objectRotation = glm::rotate(objectRotation, xinc, glm::vec3(1, 0, 0));
 	objectRotation = glm::rotate(objectRotation, yinc, glm::vec3(0, 1, 0));
 	return objectRotation * speed_automated;
+}
+
+glm::mat4 changeCameraView(bool camera) {
+	if (camera) {
+		
+		cameraPos = spaceShips.getSpaceShipPos() + glm::vec3(spaceShips.getSpaceShipObjectRotation()[1]) * 2.5f;
+
+		viewingMatrix = glm::lookAt(cameraPos, spaceShips.getSpaceShipPos() + glm::vec3(spaceShips.getSpaceShipObjectRotation()[1]) * 10.0f, glm::vec3(spaceShips.getSpaceShipObjectRotation()[0]));
+
+	}
+	else {
+		cameraPos = glm::vec3(0.0f, 10.0f, 50.0f);
+		viewingMatrix = glm::lookAt(cameraPos, spaceShips.getSpaceShipPos(), glm::vec3(0.0f, 1.0f, 0.0));
+	}
+	return viewingMatrix;
+
 }
 
 
@@ -487,41 +340,19 @@ void processKeys()
 		spinZinc = -increase;
 	}
 	//Make the z axis move by half the speed. 
-	updateTransform(spinXinc, spinYinc, spinZinc/2);
+	spaceShips.spaceRotationMovement(spinXinc, spinYinc, spinZinc/2);
 }
 
 
 void keyFunction(unsigned char key, int x, int y) {
-	/*
-	* if((key==65) ||(key==97)) {
-		cout << "A is pressed." << endl;
-		//Camera should be in the object
-		//It should look at the direction that it is facing
-		viewingMatrix = glm::lookAt(glm::vec3(0, 0, -100), glm::vec3(pos.x, pos.y, pos.z), glm::vec3(0.0f, 1.0f, 0.0));
-	}if (key==101) {
-		pos.z = pos.z + 10.0f;
-
-	}if (key == 119) {
-		//key w to move the spaceship up
-		pos.x += pos.x + 0.01f;
-		pos.y += pos.y + 0.01;
-		pos.z += pos.z + 0.01;
-		
-	}if (key == 32) {
-		//Use the spacebar to increase the speed
-		speed = speed + 0.1f;
-
-	}if
-	*/
-
 	switch(key) {
 	case 65:
 		//press A to increase the speed:
-		speed += 0.002f;
+		spaceShips.spaceSpeed(65);
 		break;
 	case 64: 
 		//press D to decrease the speed:
-		speed -= 0.02f;
+		spaceShips.spaceSpeed(64);
 		break;
 	case 32:
 		//use the spacebar to change view to cockpitview
