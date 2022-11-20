@@ -358,15 +358,30 @@ void keyFunction(unsigned char key, int x, int y) {
 		//use the spacebar to change view to cockpitview
 		camera = !camera;
 		break;
-	case 118:
-		//press v to change the view from cockpit to the other view;
+	case 97:
+		//press v to test collision--> x to the right.
+		spaceShips.test_collision(97);
 		break;
 	case 119:
-		//press w to move forward in the direction that it is facing;
-		
+		//press w to test collision--> x to the left
+		spaceShips.test_collision(119);
 		
 	case 115:
-		//press s to go backwards in the direction that it is facing;
+		//press s 
+		spaceShips.test_collision(115);
+		break;
+
+	case 100:
+		//press t
+		spaceShips.test_collision(100);
+		break;
+	case 113:
+		//press t
+		spaceShips.test_collision(113);
+		break;
+	case 101:
+		//press t
+		spaceShips.test_collision(101);
 		break;
 	}
 	

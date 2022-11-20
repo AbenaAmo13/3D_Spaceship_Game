@@ -22,16 +22,23 @@ void  SpaceShip::InitialiseSpaceShips(CShader* myShader, CShader* myBasicShader)
 		std::cout << " SpaceShip model loaded " << endl;
 		//copy data from the OBJLoader object to the threedmodel class
 		spaceShip.ConstructModelFromOBJLoader(objLoader);
-
 		//if you want to translate the object to the origin of the screen,
 		//first calculate the centre of the object, then move all the vertices
 		//back so that the centre is on the origin.
 		spaceShip.CalcCentrePoint();
 		spaceShip.CentreOnZero();
 		spaceShip.InitVBO(myShader);
-
+		spaceShip.CalcBoundingBox(minx, miny, minz, maxx, maxy, maxz);
+		initial_max_c = { maxx, maxy, maxz, 1.0f};
+		initial_min_c = { minx, miny, minz,1.0f };
+		//Automatic spaceship code. 
 		automaticSpaceShip.ConstructModelFromOBJLoader(objLoader);
 		automaticSpaceShip.InitVBO(myShader);
+		automaticSpaceShip.CalcBoundingBox(minx2, miny2, minz2, maxx2, maxy2, maxz2);
+		initial_automax_c = { max2, maxy2, maxz2, 1.0f };
+		initial_automin_c = { minx2, miny2, minz2,1.0f };
+
+		
 	}else
 	{
 		cout << " model failed to load " << endl;
@@ -62,17 +69,25 @@ void SpaceShip::SpaceShipDisplay(CShader* myShader, glm::mat4 viewingMatrix)
 	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 	spaceShip.DrawElementsUsingVBO(myShader);
 	spaceShip.DrawBoundingBox(myShader);
-
-
+	
+	//Transforming Bounding Box Collison axes
+	min_c = ModelViewMatrix * initial_min_c;
+	max_c = ModelViewMatrix * initial_max_c;
 
 	modelmatrix = glm::translate(glm::mat4(1.0f), automated_pos);
-	//objectRotation = automateDirection();
 	ModelViewMatrix = viewingMatrix * modelmatrix;
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
 	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 	automaticSpaceShip.DrawElementsUsingVBO(myShader);
 	automaticSpaceShip.DrawBoundingBox(myShader);
+	//Transforming Bounding Box Collison axes for automatic spaceship
+	auto_min_c = ModelViewMatrix * initial_automin_c;
+	auto_max_c = ModelViewMatrix * initial_automax_c;
+
+	if (collision_detection()) {
+		drawExplosions();
+	};
 
 
 }
@@ -92,7 +107,49 @@ void SpaceShip::spaceRotationMovement(float xinc, float yinc, float zinc)
 
 bool SpaceShip::collision_detection()
 {
-	return false;
+	
+	if ((min_c.x <= auto_max_c.x) && (max_c.x >= auto_min_c.x)&& (min_c.y <= auto_max_c.y) && (max_c.y >= auto_min_c.y)&&(min_c.z <= auto_max_c.z) && (max_c.z >= auto_min_c.z)) {
+			cout << "collision detected";
+			return true;
+
+		}
+		else {
+			return false;
+		}
+	
+
+	
+		
+}
+
+void SpaceShip::test_collision(unsigned char key)
+{
+	if (key ==97) {
+		
+		pos.x =pos.x-1;
+
+	}else if (key == 119) {
+
+		
+		pos.y = pos.y+1;
+
+	}
+	else if (key == 115) {
+		pos.y =pos.y-1;
+	}else if (key == 100) {
+		pos.x = pos.x+1;
+	}
+	else if (key == 113) {
+		pos.z = pos.z - 1;
+	}
+	else if (key == 101) {
+		pos.z = pos.z + 1;
+	}
+	
+}
+
+void SpaceShip::drawExplosions()
+{
 }
 
 void SpaceShip:: spaceSpeed(unsigned char key) {
@@ -107,4 +164,5 @@ void SpaceShip:: spaceSpeed(unsigned char key) {
 		spaceShipSpeed -= 0.02f;
 
 	}
+
 }

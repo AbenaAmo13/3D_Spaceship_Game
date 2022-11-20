@@ -50,6 +50,19 @@ private:
 	glm::vec3 cameraFinalLook;
 	glm::vec3 cameraPos = glm::vec3(0.0f, 10.0f, 50.0f);
 	glm::vec3 cameraLookAt = glm::vec3(0.0f, 0.0f, 0.0f);
+	//Information necessary for collision
+	double minx, maxx, miny, maxy, minz, maxz;
+	double minx2, maxx2, miny2, maxy2, minz2, max2, maxz2;
+	//Initial coordinates
+	glm::vec4 initial_max_c = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	glm::vec4 initial_min_c = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	glm::vec4 initial_automax_c = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	glm::vec4 initial_automin_c = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	//After applying model view matrix
+	glm::vec4 max_c = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	glm::vec4 min_c = glm::vec4(0.0f, 0.0f, 0.0f,1.0f);
+	glm::vec4 auto_max_c = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	glm::vec4 auto_min_c = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
 
 public: 
@@ -60,6 +73,9 @@ public:
 	void spaceSpeed(unsigned char key);
 	void spaceRotationMovement(float xinc, float yinc, float zinc);
 	bool collision_detection();
+	void test_collision(unsigned char key);
+	void drawExplosions();
+
 };
 
 
