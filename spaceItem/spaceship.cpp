@@ -89,6 +89,10 @@ void SpaceShip::SpaceShipDisplay(CShader* myShader, glm::mat4 viewingMatrix)
 	pos.y += objectRotation[1][1] * spaceShipSpeed;
 	pos.z += objectRotation[1][2] * spaceShipSpeed;
 
+	/*cout << "pos x" << pos.x << endl;
+	cout << "pos y" << pos.y << endl;
+	cout << "pos z" << pos.z << endl;*/
+
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ViewMatrix"), 1, GL_FALSE, &viewingMatrix[0][0]);
 
 	glm::mat4 modelmatrix = glm::translate(glm::mat4(1.0f), pos);

@@ -29,7 +29,7 @@ CShader* ExplodeGeoShader;
 SpaceShip spaceShip;
 ComputerControlledSpaceShip automaticSpaceShip;
 ComputerControlledSpaceShip damagedAutomaticSpaceShip;
-Planets saturn, neptune, venus;
+Planets jupiter, saturn, venus, neptune;
 Camera ThirdPersonCamera;
 SkyBox galaxy;
 
@@ -55,16 +55,17 @@ COBJLoader objLoader;	//this object is used to load the 3d models.
 glm::mat4 ProjectionMatrix; // matrix for the orthographic projection
 glm::mat4 ModelViewMatrix;  // matrix for the modelling and viewing
 glm::mat4 viewingMatrix; //matrix for the viewing
+glm::mat4 backViewingMatrix;
 
 glm::mat4 objectRotation;
 glm::vec3 translation = glm::vec3(0.0, 0.0, 0.0);
 glm::vec3 cameraPos = glm::vec3(0.0f, 10.0f, 50.0f);
 glm::vec3 cameraLookAt = glm::vec3(0.0f, 0.0f, 0.0f);
-glm::vec3 cameraFinalLook;
-glm::vec3 distanceOfCamera = glm::vec3(0.0f, 0.0f, 0.0F);
+glm::vec3 cameraDirection;
+glm::vec3 cameraUpVector;
+glm::vec3 backViewCameraPos;
 //glm::vec3 init_automatic_pos = glm::vec3(5, 38.0, 0.0f);
-glm::vec3 init_automatic_pos = glm::vec3(20.0f, 173.0f, 0.0f);
-glm::vec3 saturnPos = glm::vec3(0.0, 0.0, 0.0);
+glm::vec3 init_automatic_pos = glm::vec3(20.0f, 173.0f, 0.0f);;
 glm::vec3 saturnScaleFactor = glm::vec3(0.5, 0.5, 0.5);
 //glm::vec3 venusPos = glm::vec3(0.0, 30.0, 0.0);
 //glm::vec3 venusScaleFactor = glm::vec3(5, 5, 5);
@@ -76,13 +77,16 @@ glm::vec3 venusPos = glm::vec3(0.0, 0.0, 0.0);
 //glm::vec3 venusScaleFactor = glm::vec3(20, 20, 20);
 //glm::vec3 venusScaleFactor = glm::vec3(1, 1, 1);
 
-glm::vec3 neptunePos = glm::vec3(10.0, -30, 0.0);
+glm::vec3 jupitorPos = glm::vec3(30, 250, 0.0);
+glm::vec3 neptunePos = glm::vec3(200, 250, 0.0);
+glm::vec3 saturnPos = glm::vec3(-100, 250, 0.0);
 glm::vec3 neptuneScaleFactor = glm::vec3(5, 5, 5);
 glm::vec3 marsPos = glm::vec3(0., 50.0, 0.0);
 glm::vec3 skyBoxPos = glm::vec3(0, 200.0, 0.0);
 
 //rotation angle
 float angleInDegrees=0.0f;
+float cameraDistance; 
 
 
 //Material properties
@@ -122,6 +126,7 @@ bool escape = false;
 bool overhead = false;
 bool sideView = false;
 bool explodes = false;
+bool backView = false;
 
 float spin=180;
 float speed;
@@ -205,6 +210,10 @@ void display()
 
 
 	venus.PlanetsDisplay(myShader, viewingMatrix, venusPos);
+	jupiter.PlanetsDisplay(myShader, viewingMatrix, jupitorPos);
+	saturn.PlanetsDisplay(myShader, viewingMatrix, saturnPos);
+	neptune.PlanetsDisplay(myShader, viewingMatrix, neptunePos);
+
 
 	//spaceShip.SpaceShipDisplay(myShader, viewingMatrix);
 	//cout << glm::vec3(spaceShip.getSpaceShipObjectRotation()[1]).x << yawAngle<< rollAngle<< endl;
@@ -284,11 +293,36 @@ void init()
 
 	//lets initialise our object's rotation transformation 
 	//to the identity matrix
+
+	/*
+	
+	cameraDistance = 30.0f;
+
+	// Set the initial position of the camera to a fixed position above and in front of the initial position of the spaceship
+	backViewCameraPos = spaceShip.getSpaceShipPos() - glm::vec3(0, 200, 50);
+
+	// Transform the up vector using the objectRotation matrix
+	
+	cameraUpVector = objectRotation * glm::vec4(glm::vec3(0, 1, 0), 1.0);
+
+	// Create the initial viewing matrix using the glm::lookAt() function
+	backViewingMatrix = glm::lookAt(cameraPos, spaceShip.getSpaceShipPos(), cameraUpVector);
+
+	*/
+
+
+
+
 	objectRotation = glm::mat4(1.0f);
 
 	galaxy.InitialiseSkyBox(myShader, myBasicShader, "TestModels/galaxy_mini.obj");
+	saturn.InitialisePlanet(myShader, myBasicShader, "TestModels/saturn.obj");
+	neptune.InitialisePlanet(myShader, myBasicShader, "TestModels/neptune.obj");
+
+	jupiter.InitialisePlanet(myShader, myBasicShader, "TestModels/jupiter_medium.obj");
 
 	venus.PlanetsSetPos(venusPos);
+
 	venus.InitialisePlanet(myShader, myBasicShader, "TestModels/scaled-venus.obj");
 
 	spaceShip.initialiseSpaceShips(myShader, myBasicShader, "TestModels/spaceShip.obj", venus);
@@ -358,18 +392,47 @@ glm::mat4 changeCameraView() {
 			viewingMatrix = glm::lookAt(cameraPos, spaceShip.getSpaceShipPos(), glm::vec3(0.0f, 1.0f, 0.0));
 		}
 		
-	}else {
+	}
+	else if(backView) {
+		//cout << "in here" << endl;
+		//glm::vec3 cameraDirection = glm::vec3(objectRotation[1][0], objectRotation[1][1], objectRotation[1][2]);
+		//cameraDistance = 30.0f;
+		//backViewCameraPos = spaceShip.getSpaceShipPos() - cameraDirection * cameraDistance;
+		////cameraUpVector = objectRotation * glm::vec4(glm::vec3(0, 1, 0), 1.0);
+		//cameraUpVector =objectRotation * glm::vec4(glm::vec3(0, 1, 0), 1.0);
+		//backViewingMatrix = glm::lookAt(backViewCameraPos, spaceShip.getSpaceShipPos(), glm::vec3(0,1,0));
+		//viewingMatrix = backViewingMatrix;
 
-		cameraPos = glm::vec3(0.0f, 200.0f, 50.0f);
+
+
+		// Set the camera position to the spaceship's position plus a small offset in the direction of the spaceship's forward vector
+		glm::vec3 cameraPos = spaceShip.getSpaceShipPos() - glm::normalize( glm::vec3(spaceShip.getSpaceShipObjectRotation()[1])) * 10.5f;
+
+		// Set the position to look at to a fixed point in front of the spaceship
+		glm::vec3 lookAtPos = spaceShip.getSpaceShipPos() + glm::vec3(spaceShip.getSpaceShipObjectRotation()[1]) *40.0f;
+
+		// Use the y-axis of the spaceship's rotation as the up vector
+		glm::vec3 upVector = glm::vec3(spaceShip.getSpaceShipObjectRotation()[1][0], spaceShip.getSpaceShipObjectRotation()[1][1], spaceShip.getSpaceShipObjectRotation()[1][0]);
+
+		// Calculate the viewing matrix using the updated camera position, position to look at, and up vector
+		viewingMatrix = glm::lookAt(cameraPos, lookAtPos, upVector);
+
+
+	}
+	else {
 		
-
+		cameraPos = glm::vec3(0.0f, 200.0f, 50.0f);
 		if (spaceShip.checkPlanetCollision(spaceShip.getSpaceShipPos(), venus.getPlanetSphere(), venusPos)) {
 		viewingMatrix = glm::lookAt(cameraPos, spaceShip.getSpaceShiplastPos(), glm::vec3(0.0f, 1.0f, 0.0));
 	}
 	else {
 		viewingMatrix = glm::lookAt(cameraPos, spaceShip.getSpaceShipPos(), glm::vec3(0.0f, 1.0f, 0.0));
+
+		}
+	
+
 		
-	}
+		
 	}
 	return viewingMatrix;
 
@@ -517,6 +580,10 @@ void keyFunction(unsigned char key, int x, int y) {
 		break;
 	case 50:
 		sideView =!sideView;
+		break;
+	case 53:
+		cout << "clicked" << endl;
+		backView =! backView;
 		break;
 	case 65:
 		//press A to increase the speed:
