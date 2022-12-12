@@ -54,7 +54,6 @@ private:
 	void						CalcFaceNormals();
 	void						CalcVertNormalsForConnectedMeshes();
 	void						DeleteVertexFaceData();
-	void						CalcVertNormalsUsingOctree();
 	void						ConstructOctree();
 
 public:
@@ -74,10 +73,13 @@ public:
 	Vector3d*					GetCentrePoint();
 	void						InitVBO(CShader* myShader);
 	void						DrawElementsUsingVBO(CShader* myShader);
+	void						DrawExplosionElements(CShader* explosionShader);
 	void						DrawBoundingBox(CShader* shader);
 	void						DrawAllBoxesForOctreeNodes(CShader* shader);
 	void						DrawOctreeLeaves(CShader* shader);
 	
+
+	void						CalcVertNormalsUsingOctree();
 	int							GetOctreeTriangleListSize();
 	int							GetOctreeVertexListSize();
 	bool						IsTriangleIntersectingAABB(double boxcenter[DIMENSION_IN_3D],double boxhalfsize[DIMENSION_IN_3D], int PrimIndex);

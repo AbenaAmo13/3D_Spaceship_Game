@@ -8,6 +8,8 @@ in vec3 planet_LightDir;  //light direction arriving from the vertex
 
 in vec3 ex_PositionEye;
 
+
+
 uniform vec4 light_ambient;
 uniform vec4 planetLight_diffuse;
 uniform vec4 planetLight_specular;

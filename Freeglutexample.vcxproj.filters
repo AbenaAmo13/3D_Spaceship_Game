@@ -37,7 +37,13 @@
     <ClCompile Include="spaceItem\planets.cpp">
       <Filter>headers\spaceItems</Filter>
     </ClCompile>
-    <ClCompile Include="spaceItem\Sphere.cpp">
+    <ClCompile Include="sphere\Sphere.cpp">
+      <Filter>headers\sphere</Filter>
+    </ClCompile>
+    <ClCompile Include="spaceItem\Camera.cpp">
+      <Filter>headers\spaceItems</Filter>
+    </ClCompile>
+    <ClCompile Include="spaceItem\skyBox.cpp">
       <Filter>headers\spaceItems</Filter>
     </ClCompile>
   </ItemGroup>
@@ -78,7 +84,13 @@
     <ClInclude Include="spaceItem\planets.h">
       <Filter>headers\spaceItems</Filter>
     </ClInclude>
-    <ClInclude Include="spaceItem\Sphere.h">
+    <ClInclude Include="sphere\Sphere.h">
+      <Filter>headers\sphere</Filter>
+    </ClInclude>
+    <ClInclude Include="spaceItem\Camera.h">
+      <Filter>headers\spaceItems</Filter>
+    </ClInclude>
+    <ClInclude Include="spaceItem\skyBox.h">
       <Filter>headers\spaceItems</Filter>
     </ClInclude>
   </ItemGroup>
@@ -122,6 +134,9 @@
     <Filter Include="headers\spaceItems">
       <UniqueIdentifier>{102896f4-95f1-4d7c-aec5-6cade37a3ded}</UniqueIdentifier>
     </Filter>
+    <Filter Include="headers\sphere">
+      <UniqueIdentifier>{963638b6-5ae8-4a81-816a-4bf27bc7a179}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="glslfiles\basicTransformationsWithDisplacement.vert">
@@ -140,6 +155,21 @@
       <Filter>headers\glslfiles</Filter>
     </None>
     <None Include="glslfiles\basicTransformationsWithDisplacement.frag">
+      <Filter>headers\glslfiles</Filter>
+    </None>
+    <None Include="glslfiles\explosion.geom">
+      <Filter>headers\glslfiles</Filter>
+    </None>
+    <None Include="glslfiles\explosion.frag">
+      <Filter>headers\glslfiles</Filter>
+    </None>
+    <None Include="glslfiles\explosion.vert">
+      <Filter>headers\glslfiles</Filter>
+    </None>
+    <None Include="glslfiles\spaceShipLight.frag">
+      <Filter>headers\glslfiles</Filter>
+    </None>
+    <None Include="glslfiles\spaceShipLight.vert">
       <Filter>headers\glslfiles</Filter>
     </None>
   </ItemGroup>

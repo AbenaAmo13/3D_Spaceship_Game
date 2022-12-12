@@ -513,6 +513,8 @@ void CThreeDModel::CalcVertNormalsForConnectedMeshes()
 	}
 }
 
+
+
 /*
  *	Method	: CalcVertNormals
  *
@@ -774,7 +776,7 @@ void CThreeDModel::DrawElementsUsingVBO(CShader * myShader)
 	int triIDVBOCounter = 0;
 	for (auto i = m_vuiFaceIndexRangeForTrisWithSameTexture.begin(); i != m_vuiFaceIndexRangeForTrisWithSameTexture.end(); ++i)
 	{
-		glActiveTexture(GL_TEXTURE0);
+		glActiveTexture(GL_TEXTURE0 );
 		glBindTexture(GL_TEXTURE_2D, std::get<2>(*i));
 		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
@@ -788,6 +790,29 @@ void CThreeDModel::DrawElementsUsingVBO(CShader * myShader)
 
 
 	glBindVertexArray(0);
+}
+
+void CThreeDModel::DrawExplosionElements(CShader* explosionShader)
+{
+	glBindVertexArray(m_uiVaoID);
+
+	glUniform1i(glGetUniformLocation(explosionShader->GetProgramObjID(), "DiffuseMap"), 0);
+
+	int triIDVBOCounter = 0;
+	for (unsigned int i = 0; i < m_iNumberOfTexCoords;  i++)
+	{
+		glActiveTexture(GL_TEXTURE0 + i);
+		//glBindTexture(GL_TEXTURE_2D, m_pvTexCoords.ge));
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(m_iNumberOfVertices), GL_UNSIGNED_INT, 0);
+	}
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+
+	
+
 }
 
 /*

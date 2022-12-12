@@ -20,23 +20,34 @@ using namespace std;
 #include "Images\FreeImage.h"
 
 #include "shaders\Shader.h"
+#include "spaceItem/Camera.h"
+#include "spaceItem/skyBox.h"
 
 CShader* myShader;  ///shader object 
 CShader* myBasicShader;
-SpaceShip spaceShips;
-Planets saturn;
+CShader* ExplodeGeoShader;
+SpaceShip spaceShip;
+ComputerControlledSpaceShip automaticSpaceShip;
+ComputerControlledSpaceShip damagedAutomaticSpaceShip;
+Planets saturn, neptune, venus;
+Camera ThirdPersonCamera;
+SkyBox galaxy;
 
 
 //MODEL LOADING
 #include "3DStruct\threeDModel.h"
 #include "Obj\OBJLoader.h"
+
 //Classes loading
 
 
 float amount = 0;
 float temp = 0.002f;
+float zoomLevel;
+
 	
 CThreeDModel spaceEnvironment, boxRight, boxFront, automatedSpaceShip;
+//Camera ThirdPersonCamera(spaceShip);
 
 COBJLoader objLoader;	//this object is used to load the 3d models.
 ///END MODEL LOADING
@@ -47,15 +58,28 @@ glm::mat4 viewingMatrix; //matrix for the viewing
 
 glm::mat4 objectRotation;
 glm::vec3 translation = glm::vec3(0.0, 0.0, 0.0);
-glm::vec3 pos = glm::vec3(0.0f,0.0f,0.0f); //vector for the position of the object.
-glm::vec3 automated_pos = glm::vec3(5.0, 20.0, 0.0); //vector for the position of the other object.
-glm::vec3 initalDirectionVector = glm::vec3(0.0f,1.0f, 0.0f);
-glm::vec3 directionVector = glm::vec3(0.0f, 0.0f, 0.0f);
 glm::vec3 cameraPos = glm::vec3(0.0f, 10.0f, 50.0f);
 glm::vec3 cameraLookAt = glm::vec3(0.0f, 0.0f, 0.0f);
 glm::vec3 cameraFinalLook;
 glm::vec3 distanceOfCamera = glm::vec3(0.0f, 0.0f, 0.0F);
+//glm::vec3 init_automatic_pos = glm::vec3(5, 38.0, 0.0f);
+glm::vec3 init_automatic_pos = glm::vec3(20.0f, 173.0f, 0.0f);
+glm::vec3 saturnPos = glm::vec3(0.0, 0.0, 0.0);
+glm::vec3 saturnScaleFactor = glm::vec3(0.5, 0.5, 0.5);
+//glm::vec3 venusPos = glm::vec3(0.0, 30.0, 0.0);
+//glm::vec3 venusScaleFactor = glm::vec3(5, 5, 5);
 
+
+
+//glm::vec3 venusPos = glm::vec3(0.0, -30, 0.0);
+glm::vec3 venusPos = glm::vec3(0.0, 0.0, 0.0);
+//glm::vec3 venusScaleFactor = glm::vec3(20, 20, 20);
+//glm::vec3 venusScaleFactor = glm::vec3(1, 1, 1);
+
+glm::vec3 neptunePos = glm::vec3(10.0, -30, 0.0);
+glm::vec3 neptuneScaleFactor = glm::vec3(5, 5, 5);
+glm::vec3 marsPos = glm::vec3(0., 50.0, 0.0);
+glm::vec3 skyBoxPos = glm::vec3(0, 200.0, 0.0);
 
 //rotation angle
 float angleInDegrees=0.0f;
@@ -68,13 +92,15 @@ float Material_Specular[4] = { 0.9f,0.9f,0.8f,1.0f };
 float Material_Shininess = 50;
 
 //Light Properties
-float Light_Ambient_And_Diffuse[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-float Light_Specular[4] = { 1.0f,1.0f,1.0f,1.0f };
-float LightPos[4] = { 0.0f, 0.0f, 1.0f, 0.0f };
+float Light_Ambient_And_Diffuse[4] = {0.8f, 0.8f, 0.8f, 1.0f };
+float Light_Specular[4] = { 0.9f, 0.9f, 0.9f, 1.0f };
+float LightPos[4] = { 0.0f, 1.0f, 1.0f, 0.0f };
 //Second light properties at the entrance of the planet.
-float PlanetLight_Ambient_And_Diffuse[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-float planetLight_specular[4];
-float planetLightPos[4] = { 0.0f,1.0f,1.0f,0.0f};
+//float PlanetLight_Ambient_And_Diffuse[4] = {0.0f, 0.0f, 1.0f, 1.0f};
+//float planetLight_specular[4];
+//float planetLightPos[4] = { 0.0f,1.0f,1.0f,0.0f};
+
+//Third Light_Properties
 
 
 
@@ -91,19 +117,26 @@ bool Down = false;
 bool Home = false;
 bool End = false;
 bool camera = false;
+bool tab = false;
+bool escape = false;
+bool overhead = false;
+bool sideView = false;
+bool explodes = false;
 
 float spin=180;
 float speed;
 float speed_automated = 0.0f;
+float pitchAngle, yawAngle, rollAngle, pitchChange, cameraAngle = 0.0f;
+
 
 //OPENGL FUNCTION PROTOTYPES
 void display();				//called in winmain to draw everything to the screen
 void reshape(int width, int height);				//called when the window is resized
-void init();				//called in winmain when the program starts.
+void init();//called in winmain when the program starts.
+
 void processKeys();         //called in winmain to process keyboard input
 void idle();		//idle function
-void updateTransform(float xinc, float yinc, float zinc);
-glm::mat4 changeCameraView(bool camera);
+glm::mat4 changeCameraView();
 glm::mat4 automateDirection();
 
 
@@ -122,56 +155,84 @@ void display()
 	glUniform1f(glGetUniformLocation(myShader->GetProgramObjID(), "displacement"), amount);
 
 	//Set the projection matrix in the shader
-	GLuint projMatLocation = glGetUniformLocation(myShader->GetProgramObjID(), "ProjectionMatrix");  
+	
+	GLuint projMatLocation = glGetUniformLocation(myShader->GetProgramObjID(), "ProjectionMatrix");
+	
 	
 	glUniformMatrix4fv(projMatLocation, 1, GL_FALSE, &ProjectionMatrix[0][0]);
 
 	viewingMatrix = glm::mat4(1.0f);
 
-
+	
 	//use of glm::lookAt for viewing instead.
-	viewingMatrix = changeCameraView(camera);
+	viewingMatrix = changeCameraView();
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ViewMatrix"), 1, GL_FALSE, &viewingMatrix[0][0]);
+	
+	
 
-	spaceShips.SpaceShipDisplay(myShader, viewingMatrix);
+	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "LightPos"), 1, LightPos);
+	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "light_diffuse"), 1, Light_Ambient_And_Diffuse);
+	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "light_specular"), 1, Light_Specular);
 
+
+	//glUniform3f(glGetUniformLocation(myShader->GetProgramObjID(), "spotLight.direction"), spaceShip.getSpaceShipPos() + glm::vec3(spaceShip.getSpaceShipObjectRotation()[1]) * 10.0f);
+	
+	//glUniform3f(glGetUniformLocation(myShader->GetProgramObjID(), "viewPos"), cameraPos[0], cameraPos[1], cameraPos[2]);
 	
 	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "light_ambient"), 1, Light_Ambient_And_Diffuse);
 	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "material_ambient"), 1, Material_Ambient);
 	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "material_diffuse"), 1, Material_Diffuse);
 	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "material_specular"), 1, Material_Specular);
 	glUniform1f(glGetUniformLocation(myShader->GetProgramObjID(), "material_shininess"), Material_Shininess);
-	
+	glUniform1f(glGetUniformLocation(myShader->GetProgramObjID(), "constantAttenuation"), 0.5f);
+	glUniform1f(glGetUniformLocation(myShader->GetProgramObjID(), "linearAttenuation"), 0.05f);
+	glUniform1f(glGetUniformLocation(myShader->GetProgramObjID(), "quadraticAttenuation"), 0.005f);
 	
 
-	saturn.PlanetsDisplay(myShader, viewingMatrix);
-	//Switch to basic shader to draw the lines for the bounding boxes
-	glUseProgram(myBasicShader->GetProgramObjID());
-	projMatLocation = glGetUniformLocation(myBasicShader->GetProgramObjID(), "ProjectionMatrix");
-	glUniformMatrix4fv(projMatLocation, 1, GL_FALSE, &ProjectionMatrix[0][0]);
-	glUniformMatrix4fv(glGetUniformLocation(myBasicShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
+
+
+
+
+
+	automaticSpaceShip.automaticSpaceRotationMovement();
+	spaceShip.collision_detection(&automaticSpaceShip);
+	automaticSpaceShip.collision_detection(&spaceShip);
+	spaceShip.SpaceShipDisplay(myShader, viewingMatrix);
+	automaticSpaceShip.SpaceShipDisplay(myShader, viewingMatrix);
+	
+	glUniform3f(glGetUniformLocation(myShader->GetProgramObjID(), "SpotLightPos"), spaceShip.getSpaceShiplastPos().x, spaceShip.getSpaceShiplastPos().y, spaceShip.getSpaceShiplastPos().z);
+	glUniform3f(glGetUniformLocation(myShader->GetProgramObjID(), "SpotLightDir"),objectRotation[1][0], objectRotation[1][1], + objectRotation[1][2]);
+
+
+	venus.PlanetsDisplay(myShader, viewingMatrix, venusPos);
+
+	//spaceShip.SpaceShipDisplay(myShader, viewingMatrix);
+	//cout << glm::vec3(spaceShip.getSpaceShipObjectRotation()[1]).x << yawAngle<< rollAngle<< endl;
+
+	//glUseProgram(myBasicShader->GetProgramObjID());
+	//projMatLocation = glGetUniformLocation(myBasicShader->GetProgramObjID(), "ProjectionMatrix");
+	//glUniformMatrix4fv(projMatLocation, 1, GL_FALSE, &ProjectionMatrix[0][0]);
+	//glUniformMatrix4fv(glGetUniformLocation(myBasicShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 
 	//model.DrawAllBoxesForOctreeNodes(myBasicShader);
 	//model.DrawBoundingBox(myBasicShader);
 	//model.DrawOctreeLeaves(myBasicShader);
 
 	//switch back to the shader for textures and lighting on the objects.
-	glUseProgram(myShader->GetProgramObjID());  // use the shader
+	//glUseProgram(myShader->GetProgramObjID());  // use the shader
 
-	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(0, 0, 0));
+	//ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(0, 0, 0));
 
-	glm::mat4 normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
-	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
+	//glm::mat4 normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
+	//glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 
-	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
-
-	
-	
+	//glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 	//boxRight.DrawElementsUsingVBO(myShader);
 	//boxFront.drawElementsUsingVBO(myShader);
 
 	glFlush();
 	glutSwapBuffers();
+
 }
 
 void reshape(int width, int height)		// Resize the OpenGL window
@@ -196,6 +257,8 @@ void init()
 
 
 	myShader = new CShader();
+
+	
 	//if(!myShader->CreateShaderProgram("BasicView", "glslfiles/basicTransformationsWithDisplacement.vert", "glslfiles/basicTransformationsWithDisplacement.frag"))
 	if(!myShader->CreateShaderProgram("BasicView", "glslfiles/basicTransformations.vert", "glslfiles/basicTransformations.frag"))
 	{
@@ -208,6 +271,13 @@ void init()
 		cout << "failed to load shader" << endl;
 	}		
 
+	/*ExplodeGeoShader = new CShader();
+
+	if (!ExplodeGeoShader->CreateShaderProgram("ExplosionView", "glslfiles/explosion.vert", "glslfiles/explosion.geom", "glslfiles/explosion.frag"))
+	{
+		cout << "failed to load shader" << endl;
+	}*/
+
 	glUseProgram(myShader->GetProgramObjID());  // use the shader
 
 	glEnable(GL_TEXTURE_2D);
@@ -216,19 +286,36 @@ void init()
 	//to the identity matrix
 	objectRotation = glm::mat4(1.0f);
 
-	spaceShips.InitialiseSpaceShips(myShader, myBasicShader);
+	galaxy.InitialiseSkyBox(myShader, myBasicShader, "TestModels/galaxy_mini.obj");
+
+	venus.PlanetsSetPos(venusPos);
+	venus.InitialisePlanet(myShader, myBasicShader, "TestModels/scaled-venus.obj");
+
+	spaceShip.initialiseSpaceShips(myShader, myBasicShader, "TestModels/spaceShip.obj", venus);
+
+	automaticSpaceShip.setSpaceShipPos(init_automatic_pos);
+	automaticSpaceShip.initialiseSpaceShips(myShader, myBasicShader, "TestModels/spaceShip.obj", venus);
+
+	/*if (!myShader->CreateShaderProgram("SpotLightView", "glslfiles/spaceShipLight.vert", "glslfiles/spaceShipLight.frag"))
+	{
+		cout << "failed to load shader" << endl;
+	}
+	glUseProgram(myShader->GetProgramObjID());
+
+	
 	
 	if (!myShader->CreateShaderProgram("PlanetView", "glslfiles/secondLight.vert", "glslfiles/secondLight.frag"))
 	{
 		cout << "failed to load shader" << endl;
-	}
+	}*/
 
-	glUseProgram(myShader->GetProgramObjID());
+	//glUseProgram(myShader->GetProgramObjID());
 	
-	saturn.InitialisePlanet(myShader);
+
+	//neptune.InitialisePlanet(myShader, myBasicShader, "TestModels/neptune.obj");
 
 
-	
+
 	
 }
 glm::mat4 automateDirection() {
@@ -243,21 +330,52 @@ glm::mat4 automateDirection() {
 	return objectRotation * speed_automated;
 }
 
-glm::mat4 changeCameraView(bool camera) {
+glm::mat4 changeCameraView() {
+	float cameraDistance = 30.0f;
+	float angleAroundThePlayer = 0.0f;
+	glm::vec3 distanceAwayFromCamera = {2,2,2};
 	if (camera) {
+		//Cockpit view
+		cameraPos = spaceShip.getSpaceShipPos() + glm::vec3(spaceShip.getSpaceShipObjectRotation()[1]) * 2.5f;
+
+		if (spaceShip.exploding_space_ship) {
+			viewingMatrix = glm::lookAt(cameraPos, spaceShip.getSpaceShiplastPos() + glm::vec3(spaceShip.getSpaceShipObjectRotation()[1]) * 10.0f, glm::vec3(spaceShip.getSpaceShipObjectRotation()[0]));
+		}
+		else {
+			viewingMatrix = glm::lookAt(cameraPos, spaceShip.getSpaceShipPos() + glm::vec3(spaceShip.getSpaceShipObjectRotation()[1]) * 10.0f, glm::vec3(spaceShip.getSpaceShipObjectRotation()[0]));
+
+
+		}
+	}
+	else if (sideView) {
+		float verticalDistance = ThirdPersonCamera.calculateHorizontalDistance();
+		float horizontalDistance = ThirdPersonCamera.calculateHorizontalDistance();
+		cameraPos = ThirdPersonCamera.CalculateCameraPosition(horizontalDistance, verticalDistance, &spaceShip);
+		if (spaceShip.exploding_space_ship) {
+			viewingMatrix = glm::lookAt(cameraPos, spaceShip.getSpaceShiplastPos(), glm::vec3(0.0f, 1.0f, 0.0));
+		}
+		else {
+			viewingMatrix = glm::lookAt(cameraPos, spaceShip.getSpaceShipPos(), glm::vec3(0.0f, 1.0f, 0.0));
+		}
 		
-		cameraPos = spaceShips.getSpaceShipPos() + glm::vec3(spaceShips.getSpaceShipObjectRotation()[1]) * 2.5f;
+	}else {
 
-		viewingMatrix = glm::lookAt(cameraPos, spaceShips.getSpaceShipPos() + glm::vec3(spaceShips.getSpaceShipObjectRotation()[1]) * 10.0f, glm::vec3(spaceShips.getSpaceShipObjectRotation()[0]));
+		cameraPos = glm::vec3(0.0f, 200.0f, 50.0f);
+		
 
+		if (spaceShip.checkPlanetCollision(spaceShip.getSpaceShipPos(), venus.getPlanetSphere(), venusPos)) {
+		viewingMatrix = glm::lookAt(cameraPos, spaceShip.getSpaceShiplastPos(), glm::vec3(0.0f, 1.0f, 0.0));
 	}
 	else {
-		cameraPos = glm::vec3(0.0f, 10.0f, 50.0f);
-		viewingMatrix = glm::lookAt(cameraPos, spaceShips.getSpaceShipPos(), glm::vec3(0.0f, 1.0f, 0.0));
+		viewingMatrix = glm::lookAt(cameraPos, spaceShip.getSpaceShipPos(), glm::vec3(0.0f, 1.0f, 0.0));
+		
+	}
 	}
 	return viewingMatrix;
 
 }
+
+
 
 
 
@@ -284,6 +402,7 @@ void special(int key, int x, int y)
 	case GLUT_KEY_END:
 		End = true;
 		break;
+
 	}
 }
 
@@ -308,51 +427,104 @@ void specialUp(int key, int x, int y)
 		break;
 	case GLUT_KEY_END:
 		End = false;
-		break;		
+		break;	
 	}
 }
 
 void processKeys()
 {
-	float spinXinc = 0.0f, spinYinc = 0.0f, spinZinc = 0.0f, increase= 0.1f;
+
+	
+	float spinXinc = 0.0f, spinYinc = 0.0f, spinZinc = 0.0f, increase= 0.005f;
 	if (Left)
 	{
 		spinYinc = -increase;
+		
 	}
 	if (Right)
 	{
 		spinYinc =increase;
+		pitchAngle = increase;
 	}
 	if (Up)
 	{
 		spinXinc = increase;
+		rollAngle = increase;
 	}
 	if (Down)
 	{
 		spinXinc = -increase;
+		rollAngle - increase;
+		
 	}
-	if (Home)
+	if (Home|| tab)
 	{
 		spinZinc = increase;
+		yawAngle = increase;
 	}
-	if (End)
+	if (End || escape )
 	{
 		spinZinc = -increase;
+		yawAngle = -increase;
 	}
 	//Make the z axis move by half the speed. 
-	spaceShips.spaceRotationMovement(spinXinc, spinYinc, spinZinc/2);
+	spaceShip.spaceRotationMovement(spinXinc, spinYinc, spinZinc/2);
+}
+
+
+
+void mouse_click(int button, int  state, int x, int y) {
+	if (state == GLUT_DOWN) {
+		switch (button) {
+		case GLUT_LEFT_BUTTON:
+			cameraAngle += 0.1f;
+
+			ThirdPersonCamera.calculateAngleAroundThePlayer(cameraAngle);
+
+			//std::cout << "left click at: (" << x << ", " << y << ")\n";
+			break;
+		case GLUT_RIGHT_BUTTON:
+			//Camera Pitch Change
+			pitchChange = pitchChange + 0.1f;
+			ThirdPersonCamera.CalculatePitch(pitchChange);
+			//std::cout << "right click at: (" << x << ", " << y << ")\n";
+			break;
+		case GLUT_MIDDLE_BUTTON:
+			//std::cout << "middle click at: (" << x << ", " << y << ")\n";
+			break;
+		case 3:  //mouse wheel scrolls
+			zoomLevel = zoomLevel + 0.1f;
+			ThirdPersonCamera.IncreaseZoom(zoomLevel);
+			std::cout << "mouse wheel scroll up\n";
+			break;
+		case 4:
+			zoomLevel = zoomLevel + 0.1f;
+			ThirdPersonCamera.DecreaseZoom(zoomLevel);
+			std::cout << "mouse wheel scroll down\n";
+			break;
+		default:
+			break;
+		}
+	}
 }
 
 
 void keyFunction(unsigned char key, int x, int y) {
 	switch(key) {
+	case 49:
+		//1 to change the camera view to an overhead satelit
+		overhead = !overhead;
+		break;
+	case 50:
+		sideView =!sideView;
+		break;
 	case 65:
 		//press A to increase the speed:
-		spaceShips.spaceSpeed(65);
+		spaceShip.spaceSpeed(65);
 		break;
 	case 64: 
 		//press D to decrease the speed:
-		spaceShips.spaceSpeed(64);
+		spaceShip.spaceSpeed(64);
 		break;
 	case 32:
 		//use the spacebar to change view to cockpitview
@@ -360,29 +532,33 @@ void keyFunction(unsigned char key, int x, int y) {
 		break;
 	case 97:
 		//press v to test collision--> x to the right.
-		spaceShips.test_collision(97);
+		spaceShip.test_collision(97);
 		break;
 	case 119:
-		//press w to test collision--> x to the left
-		spaceShips.test_collision(119);
-		
+		//press
+		spaceShip.test_collision(119);
+		break;
 	case 115:
 		//press s 
-		spaceShips.test_collision(115);
+		//spaceShip.test_collision(115);
+		spaceShip.landSpaceShip();
 		break;
 
 	case 100:
 		//press t
-		spaceShips.test_collision(100);
+		spaceShip.test_collision(100);
 		break;
 	case 113:
 		//press t
-		spaceShips.test_collision(113);
+		spaceShip.test_collision(113);
 		break;
 	case 101:
 		//press t
-		spaceShips.test_collision(101);
+		spaceShip.test_collision(101);
 		break;
+	
+
+	
 	}
 	
 	
@@ -390,22 +566,27 @@ void keyFunction(unsigned char key, int x, int y) {
 }
 
 
-void updateTransform(float xinc, float yinc, float zinc)
-{
-	objectRotation = glm::rotate(objectRotation, xinc, glm::vec3(1,0,0));
-	objectRotation = glm::rotate(objectRotation, yinc, glm::vec3(0,1,0));
-	objectRotation = glm::rotate(objectRotation, zinc, glm::vec3(0,0,1));
 
-}
 
 void idle()
 {
 
 	
+	
 	 	spin += speed;
 	if(spin > 360)
 		spin = 0;
 		processKeys();
+		
+	/*frame++;
+	time = glutGet(GLUT_ELAPSED_TIME);
+
+	if (time - timebase > 1000) {
+		fps = frame * 1000.0 / (time - timebase);
+		cout << fps << endl;
+		timebase = time;
+		frame = 0;
+	}*/
 	
 
 
@@ -417,6 +598,7 @@ void idle()
 
 int main(int argc, char **argv)
 {
+	
 	glutInit(&argc, argv);
 
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
@@ -448,7 +630,9 @@ int main(int argc, char **argv)
 	glutSpecialFunc(special);
 	glutSpecialUpFunc(specialUp);
 	glutKeyboardFunc(keyFunction);
+	glutMouseFunc(mouse_click);
 
+	int frame = 0, time = 0, timebase = 0, fps=0;
 	glutIdleFunc(idle);
 
 	//starts the main loop. Program loops and calls callback functions as appropriate.

@@ -26,9 +26,11 @@
     <ClInclude Include="Obj\OBJLoader.h" />
     <ClInclude Include="Octree\Octree.h" />
     <ClInclude Include="shaders\Shader.h" />
+    <ClInclude Include="spaceItem\Camera.h" />
     <ClInclude Include="spaceItem\planets.h" />
+    <ClInclude Include="spaceItem\skyBox.h" />
     <ClInclude Include="spaceItem\spaceShip.h" />
-    <ClInclude Include="spaceItem\Sphere.h" />
+    <ClInclude Include="sphere\Sphere.h" />
     <ClInclude Include="Structures\Vector3d.h" />
     <ClInclude Include="TextureHandler\TextureHandler.h" />
     <ClInclude Include="Utilities\IntersectionTests.h" />
@@ -41,9 +43,11 @@
     <ClCompile Include="Obj\OBJLoader.cpp" />
     <ClCompile Include="Octree\Octree.cpp" />
     <ClCompile Include="shaders\Shader.cpp" />
+    <ClCompile Include="spaceItem\Camera.cpp" />
     <ClCompile Include="spaceItem\planets.cpp" />
+    <ClCompile Include="spaceItem\skyBox.cpp" />
     <ClCompile Include="spaceItem\spaceship.cpp" />
-    <ClCompile Include="spaceItem\Sphere.cpp" />
+    <ClCompile Include="sphere\Sphere.cpp" />
     <ClCompile Include="Structures\Vector3d.cpp" />
     <ClCompile Include="TextureHandler\TextureHandler.cpp" />
     <ClCompile Include="Utilities\IntersectionTests.cpp" />
@@ -55,6 +59,11 @@
     <None Include="glslfiles\basicTransformations.vert" />
     <None Include="glslfiles\basicTransformationsWithDisplacement.frag" />
     <None Include="glslfiles\basicTransformationsWithDisplacement.vert" />
+    <None Include="glslfiles\explosion.frag" />
+    <None Include="glslfiles\explosion.geom" />
+    <None Include="glslfiles\explosion.vert" />
+    <None Include="glslfiles\spaceShipLight.frag" />
+    <None Include="glslfiles\spaceShipLight.vert" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{472FEE38-34C3-4DC2-8DFC-871F6F80345E}</ProjectGuid>

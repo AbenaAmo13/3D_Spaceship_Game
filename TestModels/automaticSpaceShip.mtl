@@ -1,0 +1,27 @@
+# Blender MTL File: 'None'
+# Material Count: 2
+
+newmtl Material.004
+Ns 96.078443
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 1.000000 1.000000 1.000000
+Ke 0.0 0.0 0.0
+Ni 1.000000
+d 0.375745
+illum 9
+map_Bump E-45_glass_nor_.png
+map_Kd E-45_glass_nor_.png
+
+newmtl ship
+Ns 17.647057
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 1.000000 1.000000 1.000000
+Ke 0.0 0.0 0.0
+Ni 1.000000
+d 1.000000
+illum 2
+map_Bump E-45-nor_1.png
+map_Kd E-45_REF1.png
+map_Ks E-45_col.png
