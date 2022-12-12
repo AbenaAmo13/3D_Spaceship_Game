@@ -44,9 +44,9 @@ void Planets::InitialisePlanet(CShader* myShader, CShader* myBasicShader, string
 		glm::mat3 normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
 		glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 		planets.DrawElementsUsingVBO(myShader);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		/*glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		planetSphere.render();
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);*/
 
 	}
 
