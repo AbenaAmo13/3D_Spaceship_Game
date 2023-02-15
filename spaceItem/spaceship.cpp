@@ -85,6 +85,8 @@ void SpaceShip::initialiseSpaceShips(CShader* myShader, CShader* myBasicShader, 
 
 void SpaceShip::SpaceShipDisplay(CShader* myShader, glm::mat4 viewingMatrix)
 {
+	
+
 	pos.x += objectRotation[1][0] * spaceShipSpeed;
 	pos.y += objectRotation[1][1] * spaceShipSpeed;
 	pos.z += objectRotation[1][2] * spaceShipSpeed;
@@ -95,9 +97,27 @@ void SpaceShip::SpaceShipDisplay(CShader* myShader, glm::mat4 viewingMatrix)
 
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ViewMatrix"), 1, GL_FALSE, &viewingMatrix[0][0]);
 
+
+
+
 	glm::mat4 modelmatrix = glm::translate(glm::mat4(1.0f), pos);
 	ModelViewMatrix = viewingMatrix * modelmatrix* objectRotation;
 
+
+	
+	float LightPos[4] = { pos.x,pos.y, pos.z, 1.0f};
+	float LightDir[4] = {objectRotation[1][0], objectRotation[1][1], objectRotation[1][2], 0.0f };
+	
+
+
+	if (!exploding_space_ship) {
+		glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "SpotLightPos"), 1, LightPos);
+		glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "SpotLightDir"), 1, LightDir);
+	}
+	
+	
+	
+	
 	explosionTestPoint1 = centreForExplosionTest + pos;
 	explosionTestPoint1 = glm::vec3(glm::vec4(explosionTestPoint1, 1.0) * objectRotation);
 
@@ -111,48 +131,121 @@ void SpaceShip::SpaceShipDisplay(CShader* myShader, glm::mat4 viewingMatrix)
 	
 	
 	glm::vec3 venusPos = venus.PlanetsGetPos();
-	float distanceFromPos = glm::length(venusPos - pos);
-	float distanceFromTestPoint = glm::length(explosionTestPoint1 - venusPos);
-	float distanceFromLandingTestPoint = glm::length(landingTestPoint - venusPos);
 	float venusRadius = venus.getPlanetSphere().getRadius();
 	float venusRadiusScaled = venusRadius * 310;
-	if (distanceFromTestPoint < venusRadiusScaled){
-		// Set the exploding_space_ship variable to true if a collision has occurred
-		exploding_space_ship = true;
+
+	if (!exploding_space_ship) {
+		float distanceFromPos = glm::length(venusPos - pos);
+		float distanceFromTestPoint = glm::length(explosionTestPoint1 - venusPos);
+		float distanceFromLandingTestPoint = glm::length(landingTestPoint - venusPos);
+	
+		if (distanceFromTestPoint < venusRadiusScaled) {
+			cout << "COLLISION!!!";
+			// Set the exploding_space_ship variable to true if a collision has occurred
+			exploding_space_ship = true;
+		}
+		if (distanceFromPos < venusRadiusScaled) {
+			exploding_space_ship = true;
+		}
+
+		//Landing testPoint must be in the positive direction and be less than the venus radius scaled. 
+		if ((distanceFromLandingTestPoint < venusRadiusScaled) && landingTestPoint.y > 0) {
+			landed = true;
+			spaceShipSpeed = 0;
+		}
+	}
+	if (!exploding_space_ship) {
+		spaceShipModel.DrawElementsUsingVBO(myShader);
+		
+	 
+	}
+	else {
+		drawExplosions(myShader, viewingMatrix);
+		//glutTimerFunc(1000, explode, 0);
+
+		//counter = 17;
+	
 	}
 
-	if (distanceFromPos < venusRadiusScaled) {
-		exploding_space_ship = true;
+	
+	//Transforming Bounding Box Collison axes
+	min_c = modelmatrix * initial_min_c;
+	max_c = modelmatrix * initial_max_c;
+	
+}
+
+
+
+
+
+void ComputerControlledSpaceShip::automaticDisplay(CShader* myShader, glm::mat4 viewingMatrix)
+{
+
+
+	pos.x += objectRotation[1][0] * spaceShipSpeed;
+	pos.y += objectRotation[1][1] * spaceShipSpeed;
+	pos.z += objectRotation[1][2] * spaceShipSpeed;
+
+	
+
+	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ViewMatrix"), 1, GL_FALSE, &viewingMatrix[0][0]);
+
+
+
+
+	glm::mat4 modelmatrix = glm::translate(glm::mat4(1.0f), pos);
+	ModelViewMatrix = viewingMatrix * modelmatrix * objectRotation;
+
+
+	explosionTestPoint1 = centreForExplosionTest + pos;
+	explosionTestPoint1 = glm::vec3(glm::vec4(explosionTestPoint1, 1.0) * objectRotation);
+
+	landingTestPoint = landingCenter + pos;
+	landingTestPoint = glm::vec3(glm::vec4(landingTestPoint, 1.0) * objectRotation);
+
+
+	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
+	glm::mat3 normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
+	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
+
+
+	glm::vec3 venusPos = venus.PlanetsGetPos();
+	float venusRadius = venus.getPlanetSphere().getRadius();
+	float venusRadiusScaled = venusRadius * 310;
+
+	if (!exploding_space_ship) {
+		float distanceFromPos = glm::length(venusPos - pos);
+		float distanceFromTestPoint = glm::length(explosionTestPoint1 - venusPos);
+		float distanceFromLandingTestPoint = glm::length(landingTestPoint - venusPos);
+
+		cout << explosionTestPoint1.y << endl;
+		if (distanceFromTestPoint < venusRadiusScaled) {
+			cout << "COLLISION!!!";
+			// Set the exploding_space_ship variable to true if a collision has occurred
+			exploding_space_ship = true;
+		}
+		if (distanceFromPos < venusRadiusScaled) {
+			exploding_space_ship = true;
+		}
+
+		//Landing testPoint must be in the positive direction and be less than the venus radius scaled. 
+		if ((distanceFromLandingTestPoint < venusRadiusScaled) && landingTestPoint.y > 0) {
+			landed = true;
+			spaceShipSpeed = 0;
+		}
 	}
+
 	if (!exploding_space_ship) {
 		spaceShipModel.DrawElementsUsingVBO(myShader);
 	}
 	else {
 		drawExplosions(myShader, viewingMatrix);
 	}
-
-	
-	//Landing testPoint must be in the positive direction and be less than the venus radius scaled. 
-	if ((distanceFromLandingTestPoint < venusRadiusScaled) && landingTestPoint.y > 0) {
-		landed = true;
-		spaceShipSpeed = 0;
-	}
-
-
-
-
-
-
-	
-	
 	//Transforming Bounding Box Collison axes
 	min_c = modelmatrix * initial_min_c;
 	max_c = modelmatrix * initial_max_c;
-	//spaceShipModel.DrawBoundingBox(myShader);
+
 }
-
-
-
 
 
 
@@ -172,7 +265,7 @@ void SpaceShip::spaceRotationMovement(float xinc, float yinc, float zinc)
 
 bool SpaceShip::collision_detection(SpaceShip* otherShip)
 {
-		exploding_space_ship = false;
+		//exploding_space_ship = false;
 		if ((min_c.x < otherShip->max_c.x) && (max_c.x > otherShip->min_c.x)&& (min_c.y < otherShip->max_c.y) && (max_c.y > otherShip->min_c.y)&&(min_c.z < otherShip->max_c.z) && (max_c.z > otherShip->min_c.z)) {
 			exploding_space_ship = true;
 		}
@@ -319,21 +412,35 @@ void SpaceShip::landSpaceShip()
 		//Reducing the speed
 	if (!landed) {
 		spaceShipSpeed = spaceShipSpeed - 0.005f;
-		pos.y = pos.y - 0.05f;
+		pos.y = pos.y - 0.005f;
 	}
 		
 }
 
-glm::vec4 SpaceShip::explode(glm::vec4 position, glm::vec3 normal)
+
+
+//
+void SpaceShip::explode( int value)
 {
+
+	if (counter > 22) {
+		glutTimerFunc(0, NULL, 0);
+	}
 	
-	float time = static_cast<float>(GLUT_ELAPSED_TIME);
-		float magnitude = 2.0;
-		//glm:: vec3 direction = normal * ((sin(time) + 1.0) / 2.0) * magnitude;
-		//return position + glm::vec4(direction, 0.0);
-		return glm::vec4();
-	
+
+	// Call your function to render the model here, passing the myShader parameter
+	counter++;
+	exploded_parts[counter]->DrawElementsUsingVBO(myShader);
+
+		
 }
+
+
+
+
+		
+	
+//}
 
 bool SpaceShip::checkPlanetCollision(glm::vec3 pos, Sphere planetSphere, glm::vec3 planet_pos)
 {

@@ -29,7 +29,7 @@ CShader* ExplodeGeoShader;
 SpaceShip spaceShip;
 ComputerControlledSpaceShip automaticSpaceShip;
 ComputerControlledSpaceShip damagedAutomaticSpaceShip;
-Planets jupiter, saturn, venus, neptune;
+Planets jupiter, saturn, venus, neptune, mars;
 Camera ThirdPersonCamera;
 SkyBox galaxy;
 
@@ -78,10 +78,10 @@ glm::vec3 venusPos = glm::vec3(0.0, 0.0, 0.0);
 //glm::vec3 venusScaleFactor = glm::vec3(1, 1, 1);
 
 glm::vec3 jupitorPos = glm::vec3(30, 250, 0.0);
+glm::vec3 marsPos = glm::vec3(80, 500, 0);
 glm::vec3 neptunePos = glm::vec3(200, 250, 0.0);
 glm::vec3 saturnPos = glm::vec3(-100, 250, 0.0);
 glm::vec3 neptuneScaleFactor = glm::vec3(5, 5, 5);
-glm::vec3 marsPos = glm::vec3(0., 50.0, 0.0);
 glm::vec3 skyBoxPos = glm::vec3(0, 200.0, 0.0);
 
 //rotation angle
@@ -127,6 +127,7 @@ bool overhead = false;
 bool sideView = false;
 bool explodes = false;
 bool backView = false;
+bool galaxyView = false;
 
 float spin=180;
 float speed;
@@ -180,43 +181,25 @@ void display()
 	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "light_specular"), 1, Light_Specular);
 
 
-	//glUniform3f(glGetUniformLocation(myShader->GetProgramObjID(), "spotLight.direction"), spaceShip.getSpaceShipPos() + glm::vec3(spaceShip.getSpaceShipObjectRotation()[1]) * 10.0f);
-	
-	//glUniform3f(glGetUniformLocation(myShader->GetProgramObjID(), "viewPos"), cameraPos[0], cameraPos[1], cameraPos[2]);
 	
 	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "light_ambient"), 1, Light_Ambient_And_Diffuse);
 	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "material_ambient"), 1, Material_Ambient);
 	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "material_diffuse"), 1, Material_Diffuse);
 	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "material_specular"), 1, Material_Specular);
-	glUniform1f(glGetUniformLocation(myShader->GetProgramObjID(), "material_shininess"), Material_Shininess);
-	glUniform1f(glGetUniformLocation(myShader->GetProgramObjID(), "constantAttenuation"), 0.5f);
-	glUniform1f(glGetUniformLocation(myShader->GetProgramObjID(), "linearAttenuation"), 0.05f);
-	glUniform1f(glGetUniformLocation(myShader->GetProgramObjID(), "quadraticAttenuation"), 0.005f);
-	
-
-
-
-
-
+    glUniform1f(glGetUniformLocation(myShader->GetProgramObjID(), "material_shininess"), Material_Shininess);
 
 	automaticSpaceShip.automaticSpaceRotationMovement();
 	spaceShip.collision_detection(&automaticSpaceShip);
 	automaticSpaceShip.collision_detection(&spaceShip);
 	spaceShip.SpaceShipDisplay(myShader, viewingMatrix);
-	automaticSpaceShip.SpaceShipDisplay(myShader, viewingMatrix);
+	automaticSpaceShip.automaticDisplay(myShader, viewingMatrix);
 	
-	glUniform3f(glGetUniformLocation(myShader->GetProgramObjID(), "SpotLightPos"), spaceShip.getSpaceShiplastPos().x, spaceShip.getSpaceShiplastPos().y, spaceShip.getSpaceShiplastPos().z);
-	glUniform3f(glGetUniformLocation(myShader->GetProgramObjID(), "SpotLightDir"),objectRotation[1][0], objectRotation[1][1], + objectRotation[1][2]);
 
-
+	mars.PlanetsDisplay(myShader, viewingMatrix, marsPos);
 	venus.PlanetsDisplay(myShader, viewingMatrix, venusPos);
 	jupiter.PlanetsDisplay(myShader, viewingMatrix, jupitorPos);
 	saturn.PlanetsDisplay(myShader, viewingMatrix, saturnPos);
 	neptune.PlanetsDisplay(myShader, viewingMatrix, neptunePos);
-
-
-	//spaceShip.SpaceShipDisplay(myShader, viewingMatrix);
-	//cout << glm::vec3(spaceShip.getSpaceShipObjectRotation()[1]).x << yawAngle<< rollAngle<< endl;
 
 	//glUseProgram(myBasicShader->GetProgramObjID());
 	//projMatLocation = glGetUniformLocation(myBasicShader->GetProgramObjID(), "ProjectionMatrix");
@@ -318,6 +301,8 @@ void init()
 	galaxy.InitialiseSkyBox(myShader, myBasicShader, "TestModels/galaxy_mini.obj");
 	saturn.InitialisePlanet(myShader, myBasicShader, "TestModels/saturn.obj");
 	neptune.InitialisePlanet(myShader, myBasicShader, "TestModels/neptune.obj");
+	mars.InitialisePlanet(myShader, myBasicShader, "TestModels/another_planet.obj");
+
 
 	jupiter.InitialisePlanet(myShader, myBasicShader, "TestModels/jupiter_medium.obj");
 
@@ -330,27 +315,6 @@ void init()
 	automaticSpaceShip.setSpaceShipPos(init_automatic_pos);
 	automaticSpaceShip.initialiseSpaceShips(myShader, myBasicShader, "TestModels/spaceShip.obj", venus);
 
-	/*if (!myShader->CreateShaderProgram("SpotLightView", "glslfiles/spaceShipLight.vert", "glslfiles/spaceShipLight.frag"))
-	{
-		cout << "failed to load shader" << endl;
-	}
-	glUseProgram(myShader->GetProgramObjID());
-
-	
-	
-	if (!myShader->CreateShaderProgram("PlanetView", "glslfiles/secondLight.vert", "glslfiles/secondLight.frag"))
-	{
-		cout << "failed to load shader" << endl;
-	}*/
-
-	//glUseProgram(myShader->GetProgramObjID());
-	
-
-	//neptune.InitialisePlanet(myShader, myBasicShader, "TestModels/neptune.obj");
-
-
-
-	
 }
 glm::mat4 automateDirection() {
 	float xinc = (float)rand() / RAND_MAX;
@@ -394,17 +358,6 @@ glm::mat4 changeCameraView() {
 		
 	}
 	else if(backView) {
-		//cout << "in here" << endl;
-		//glm::vec3 cameraDirection = glm::vec3(objectRotation[1][0], objectRotation[1][1], objectRotation[1][2]);
-		//cameraDistance = 30.0f;
-		//backViewCameraPos = spaceShip.getSpaceShipPos() - cameraDirection * cameraDistance;
-		////cameraUpVector = objectRotation * glm::vec4(glm::vec3(0, 1, 0), 1.0);
-		//cameraUpVector =objectRotation * glm::vec4(glm::vec3(0, 1, 0), 1.0);
-		//backViewingMatrix = glm::lookAt(backViewCameraPos, spaceShip.getSpaceShipPos(), glm::vec3(0,1,0));
-		//viewingMatrix = backViewingMatrix;
-
-
-
 		// Set the camera position to the spaceship's position plus a small offset in the direction of the spaceship's forward vector
 		glm::vec3 cameraPos = spaceShip.getSpaceShipPos() - glm::normalize( glm::vec3(spaceShip.getSpaceShipObjectRotation()[1])) * 10.5f;
 
@@ -417,21 +370,25 @@ glm::mat4 changeCameraView() {
 		// Calculate the viewing matrix using the updated camera position, position to look at, and up vector
 		viewingMatrix = glm::lookAt(cameraPos, lookAtPos, upVector);
 
+	}
+	else if (galaxyView) {
+
+		cameraPos = glm::vec3(0.0f, 500.0f, 200.0f);
+
+		viewingMatrix = glm::lookAt(cameraPos, glm::vec3(0,0,0), glm::vec3(0.0f, 1.0f, 0.0));
+
 
 	}
 	else {
 		
 		cameraPos = glm::vec3(0.0f, 200.0f, 50.0f);
-		if (spaceShip.checkPlanetCollision(spaceShip.getSpaceShipPos(), venus.getPlanetSphere(), venusPos)) {
+		if (spaceShip.exploding_space_ship) {
 		viewingMatrix = glm::lookAt(cameraPos, spaceShip.getSpaceShiplastPos(), glm::vec3(0.0f, 1.0f, 0.0));
 	}
 	else {
 		viewingMatrix = glm::lookAt(cameraPos, spaceShip.getSpaceShipPos(), glm::vec3(0.0f, 1.0f, 0.0));
 
-		}
-	
-
-		
+		}	
 		
 	}
 	return viewingMatrix;
@@ -465,6 +422,12 @@ void special(int key, int x, int y)
 	case GLUT_KEY_END:
 		End = true;
 		break;
+	case GLUT_KEY_CTRL_L:
+		Home = true;
+		break;
+	case GLUT_KEY_SHIFT_R:
+		End = true;
+		break;
 
 	}
 }
@@ -491,6 +454,12 @@ void specialUp(int key, int x, int y)
 	case GLUT_KEY_END:
 		End = false;
 		break;	
+	case GLUT_KEY_CTRL_L:
+		Home = false;
+		break;
+	case GLUT_KEY_SHIFT_R:
+		End = false;
+		break;
 	}
 }
 
@@ -498,7 +467,7 @@ void processKeys()
 {
 
 	
-	float spinXinc = 0.0f, spinYinc = 0.0f, spinZinc = 0.0f, increase= 0.005f;
+	float spinXinc = 0.0f, spinYinc = 0.0f, spinZinc = 0.0f, increase= 0.0005f;
 	if (Left)
 	{
 		spinYinc = -increase;
@@ -584,6 +553,9 @@ void keyFunction(unsigned char key, int x, int y) {
 	case 53:
 		cout << "clicked" << endl;
 		backView =! backView;
+		break;
+	case 54:
+		galaxyView = !galaxyView;
 		break;
 	case 65:
 		//press A to increase the speed:
@@ -671,7 +643,7 @@ int main(int argc, char **argv)
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
 	glutInitWindowSize(screenWidth, screenHeight);
 	glutInitWindowPosition(100, 100);
-	glutCreateWindow("OpenGL FreeGLUT Example: Obj loading");
+	glutCreateWindow("SpaceShip Game 2022");
 
 	//This initialises glew - it must be called after the window is created.
 	GLenum err = glewInit();

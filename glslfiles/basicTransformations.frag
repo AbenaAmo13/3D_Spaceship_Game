@@ -1,21 +1,5 @@
 #version 400
 
-struct SpotLight{
-vec3 position;  
-    vec3 direction;
-    float cutOff;
-    float outerCutOff;
-  
-    vec3 ambient;
-    vec3 spotLight_diffuse;
-    vec3 specular;
-	
-    float constant;
-    float linear;
-    float quadratic;
-
-};
-
 
 
 in  vec2 ex_TexCoord; //texture coord arriving from the vertex
@@ -41,7 +25,7 @@ uniform vec4 material_ambient;
 uniform vec4 material_diffuse;
 uniform vec4 material_specular;
 uniform float material_shininess;
-float spot_cutoff = 0.2;
+float spot_cutoff = 0.5;
 float spot_exponent = 10;
 
 
@@ -50,9 +34,7 @@ float spot_exponent = 10;
 
 uniform sampler2D DiffuseMap;
 
-uniform vec3 viewPos;
 
-uniform SpotLight spotLight;
 
 void main(void)
 {

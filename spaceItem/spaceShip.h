@@ -29,8 +29,14 @@
 
 class SpaceShip {
 protected:
+	int counter = 17;
+	int startTime;
+	int oldTimeSinceStart = 0; 
 	float spaceShipSpeed = 0;
+	float distanceFromPos, distanceFromTestPoint, distanceFromLandingTestPoint = 0;
 	bool landed = false;
+	float LightPos[4];
+	float LightDir[4];
 	float xCentre, yCentre, zCentre, landingTestPointX, landingTestPointY, landingTestPointZ;
 	double minx, maxx, miny, maxy, minz, maxz; 	//Information necessary for collision
 	CThreeDModel spaceShipModel;  //A threeDModel spaceShip object is needed for each model loaded
@@ -74,10 +80,10 @@ public:
 	//void drawExplosions2(CShader* explodeShader, glm::mat4 viewingMatrix, glm::mat4 ProjectionMatrix);
 	void calcExplosionRandomPoints();
 	void landSpaceShip();
+	void explode(int value);
 	glm::vec3 randomExplosionPoint;
 	glm::vec3 explosionTestPoint1;
 	glm::vec3 last_position_before_explosion;
-	glm::vec4 explode(glm::vec4 position, glm::vec3 norml);
 	bool checkPlanetCollision(glm::vec3 pos, Sphere planetSphere, glm::vec3 planetPos);
 	bool CheckPlanetCollisionTestPoints(Sphere planetSphere, glm::vec3 planet_pos);
 	bool exploding_space_ship = false;
@@ -101,7 +107,7 @@ private:
 	glm::vec3 old_pos;
 	float rotationAngle;
 public:
-	
+	void automaticDisplay(CShader* myShader, glm::mat4 viewingMatrix);
 	//void damagedSpaceShip();
 	void automaticSpaceRotationMovement();
 };
